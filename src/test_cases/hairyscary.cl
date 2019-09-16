@@ -22,7 +22,7 @@ class Bar inherits Razz {
 };
 
 
-class Razz inherits Foo {
+class Razz inherits Bar {
 
      e : Bar <- case self of
 		  n : Razz => (new Bar);
