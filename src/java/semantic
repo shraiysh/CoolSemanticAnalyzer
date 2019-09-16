@@ -1,5 +1,2 @@
 #!/bin/bash
-export tmp=$(pwd)
-cd $(find . -name "java")
-java -cp /usr/local/lib/antlr-4.5-complete.jar:../java cool.SemanticTest "$tmp/$1"
-cd "$tmp"
+java -cp /usr/local/lib/antlr-4.5-complete.jar:../java cool.SemanticTest $1
