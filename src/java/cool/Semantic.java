@@ -15,6 +15,5 @@ public class Semantic{
 */
 	public Semantic(AST.program program){
 		//Write Semantic analyzer code here
-		// System.out.println(program.getString(" "));
 	}
 }
