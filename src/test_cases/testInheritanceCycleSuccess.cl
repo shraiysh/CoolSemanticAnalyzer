@@ -1,3 +1,5 @@
 class A inherits B {};
-class B inherits C {};
-class C inherits Object {};
+class B inherits C { fun() : Object { 6 };};
+class C {
+	fun() : Int {5 };
+};
