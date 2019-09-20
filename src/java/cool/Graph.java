@@ -11,7 +11,11 @@ class Graph<T> {
   public void addVertex(T s) 
   { 
     map.put(s, new LinkedList<T>()); 
-  } 
+  }
+
+  public void addEdge(T source, T destination) {
+    this.addEdge(source, destination, false);
+  }
 
   // This function adds the edge 
   // between source to destination 
