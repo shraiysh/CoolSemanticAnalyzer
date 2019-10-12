@@ -120,6 +120,10 @@ public class ClassGraph {
     public Node getLCANode(String a, String b) {
         return getLCA(getNode(a), getNode(b));
     }
+
+    public String getLCA(String a, String b) {
+        return getLCANode(a, b).name();
+    }
     
 
     public void addClass(AST.class_ astClass) {
