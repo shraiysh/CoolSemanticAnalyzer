@@ -105,7 +105,7 @@ public class ClassGraph {
     }
 
     public boolean isAncestor(Node anc, Node nd) {
-        return anc.inTime < nd.inTime && nd.outTime < anc.outTime;
+        return anc.inTime <= nd.inTime && nd.outTime <= anc.outTime;
     }
 
     public boolean isAncestor(String anc, String nd) {
