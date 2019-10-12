@@ -1,9 +1,5 @@
 package cool;
 
-import java.util.*;
-
-import cool.AST.feature;
-
 public class Semantic{
 	private boolean errorFlag = false;
 	public void reportError(String filename, int lineNo, String error){
@@ -37,16 +33,16 @@ public class Semantic{
 		ClassGraph graph = new ClassGraph();
 
 		ASTVisitor pass1 = new InfoGatherPass(graph);
-		
 		program.accept(pass1);
+
+		if(ErrorHandler.getErrorFlag()) {
+			System.exit(1);
+		}
 		
 		ASTVisitor pass2 = new SemanticCheckPass(graph);
-
 		program.accept(pass2);
-		// Check inheritance and populate classGraph
-		// analyzeInheritance(program);
 
-		if(getErrorFlag()) {
+		if(ErrorHandler.getErrorFlag()) {
 			System.exit(1);
 		}
 

@@ -17,9 +17,9 @@ public class ClassGraph {
      * Constructor
      */
     public ClassGraph() {
-        addBasicClasses();
         classNameToNode = new HashMap<>();
         noInheritList   = Arrays.asList("Int", "String", "Bool");
+        addBasicClasses();
     }
 
 
@@ -35,14 +35,11 @@ public class ClassGraph {
      * Preprocesses and analyzes the class graph.
      * @return  true if successful else false one rror
      */
-    public boolean analyze() {
+    public void analyze() {
 
-        if (ErrorHandler.getErrorFlag() || !updateEdges()) return false;
+        if (ErrorHandler.getErrorFlag()) return;
 
-        // @check for main here? continue or not?
-        // if( ! hasClass("Main")) {
-        //     ;
-        // }
+        updateEdges();
 
         timer = 1;
         runDFS(rootNode, 0);
@@ -54,10 +51,11 @@ public class ClassGraph {
                 while(nx != nd) cyclePath.append(" -> ").append(nx.name());
                 // @error
                 // this node is in a cycle.
-                return false;
+                ErrorHandler.reportError(nd.getAstClass().filename, nd.getAstClass().lineNo,
+                     "Cyclic dependency detected. These are involved in a cycle: "+ cyclePath.toString());
+                return;
             }
         }
-        return true;
     }
 
     private void runDFS(Node nd, int d) {
@@ -81,11 +79,10 @@ public class ClassGraph {
         return classNameToNode.containsKey(className);
     }
 
-    private boolean updateEdges() {
+    private void updateEdges() {
         for (Node nd : classNameToNode.values()) if(nd != rootNode) {
 
             String parentName = nd.getAstClass().parent;
-// @check no parent is null or Object
             if(hasClass(parentName)) {
                 Node parentNode = classNameToNode.get(parentName);
                 nd.setParentNode(parentNode);
@@ -93,10 +90,13 @@ public class ClassGraph {
             } else {
                 // Parent class was not defined.
                 // @error
-                return true;
+                ErrorHandler.reportError(nd.getAstClass().filename , nd.getAstClass().lineNo
+                                    , "Parent class "+parentName+" of class "+nd.name()
+                                    + "doesn't exist. Recovery by setting parent to 'Object'" );
+                nd.setParentNode(rootNode);
+                rootNode.addChild(nd);
             }
         }
-        return false;
     }
 
     private boolean isRestrictedInheritance(AST.class_ astClass) {
@@ -127,10 +127,12 @@ public class ClassGraph {
     
 
     public void addClass(AST.class_ astClass) {
+
         if(classNameToNode.containsKey(astClass.name)) {
-            // @error
+            ErrorHandler.reportError(astClass.filename, astClass.lineNo, "Class "+astClass.name 
+                                                                        + "defined multiple times.");
         } else if (isRestrictedInheritance(astClass)) {
-            // @error
+            ErrorHandler.reportError(astClass.filename, astClass.lineNo, "Can't inherit from "+astClass.parent);
         } else {
             classNameToNode.put(astClass.name, new Node(astClass));
         }
@@ -153,6 +155,7 @@ public class ClassGraph {
         AST.class_ obj = new AST.class_("Object", null, null, obj_features, -1);
         
         rootNode = new Node(obj);
+        classNameToNode.put("Object", rootNode);
     }
 
     private void addIO() {
@@ -200,14 +203,15 @@ public class ClassGraph {
         private List<Node> children;
         public HashMap<String, AST.method> methods;
 
-        private int inTime, outTime;
-        private int depth;
+        public int inTime, outTime;
+        public int depth;
 
         public Node(AST.class_ astClass) {
             this.astClass = astClass;
             this.parent = null;
             this.inTime  = 0;
             this.outTime = 0;
+            this.methods = new HashMap<>();
             children = new ArrayList<>();
         }
 
