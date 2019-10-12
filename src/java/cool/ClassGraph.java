@@ -93,7 +93,7 @@ public class ClassGraph {
                 // @error
                 ErrorHandler.reportError(nd.getAstClass().filename , nd.getAstClass().lineNo
                                     , "Parent class "+parentName+" of class "+nd.name()
-                                    + "doesn't exist. Recovery by setting parent to 'Object'" );
+                                    + " doesn't exist. Recovery by setting parent to 'Object'" );
                 nd.setParentNode(rootNode);
                 rootNode.addChild(nd);
             }
@@ -105,7 +105,7 @@ public class ClassGraph {
     }
 
     public boolean isAncestor(Node anc, Node nd) {
-        return anc.inTime < nd.inTime && nd.outTime < anc.outTime;
+        return anc.inTime <= nd.inTime && nd.outTime <= anc.outTime;
     }
 
     public boolean isAncestor(String anc, String nd) {
@@ -180,7 +180,7 @@ public class ClassGraph {
     private void addString() {
 		AST.method length  = new AST.method("length", new ArrayList<>(), "Int", null, -1);
 		AST.method concat  = new AST.method("concat", Arrays.asList(new AST.formal("s", "String", 1)), "String", null, -1);
-        AST.method sub_str = new AST.method("sub_str", Arrays.asList( new AST.formal("i", "Int", -1) 
+        AST.method sub_str = new AST.method("substr", Arrays.asList( new AST.formal("i", "Int", -1) 
                                                                     , new AST.formal("l", "Int", -1)), "String", null, -1);
 
         List<AST.feature> string_features = Arrays.asList(length, concat, sub_str);
