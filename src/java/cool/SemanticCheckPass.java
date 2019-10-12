@@ -542,7 +542,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
         if(!cond_node.predicate.type.equals("Bool")) {
             ErrorHandler.reportError(currClass.filename, cond_node.lineNo,
-                "Loop condition does not have type Bool.");
+                "If condition does not have type Bool.");
         }
 
         cond_node.type = graph.getLCA(cond_node.ifbody.type, cond_node.elsebody.type);
@@ -623,8 +623,12 @@ public class SemanticCheckPass extends ASTBaseVisitor {
             List<AST.expression> actuals = dispatch_node.actuals;
             List<AST.formal> formals = method.formals;
 
-            for(int i = 0; i < actuals.size(); i++) {
-                if(i < formals.size()) {
+            if(actuals.size() != formals.size()) {
+                ErrorHandler.reportError(currClass.filename, dispatch_node.lineNo,
+                            "Method " + method.name + " called with wrong number of arguments." );
+            }
+            else {
+                for(int i = 0; i < actuals.size(); i++) {
                     if(!graph.isAncestor(formals.get(i).typeid, actuals.get(i).type)) {
                         ErrorHandler.reportError(currClass.filename, dispatch_node.lineNo,
                             "Type mismatch for arg " + formals.get(i).name + 
@@ -633,7 +637,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
                     }
                 }
             }
-            dispatch_node.type = method.typeid;
+            dispatch_node.type = method.typeid;    
         }
     }
 
@@ -678,6 +682,8 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         if(!graph.isAncestor(static_dispatch_node.typeid, static_dispatch_node.caller.type)) {
             ErrorHandler.reportError(currClass.name, static_dispatch_node.lineNo,
                "Class " + static_dispatch_node.typeid + " is not an ancestor of the caller type " + static_dispatch_node.caller.type);
+            static_dispatch_node.type = "Object";
+            return;
         }
 
         AST.method method = graph.getNode(static_dispatch_node.typeid).getMethod(static_dispatch_node.name);
