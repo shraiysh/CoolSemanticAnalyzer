@@ -3,7 +3,6 @@ package cool;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 
 public class ClassGraph {
@@ -38,7 +37,7 @@ public class ClassGraph {
      */
     public boolean analyze() {
 
-        if (!updateEdges()) return false;
+        if (ErrorHandler.getErrorFlag() || !updateEdges()) return false;
 
         // @check for main here? continue or not?
         // if( ! hasClass("Main")) {
@@ -50,6 +49,9 @@ public class ClassGraph {
         
         for(Node nd : getNodeList()) {
             if (nd.inTime == 0) {
+                StringBuilder cyclePath = new StringBuilder(nd.name());
+                Node nx = nd.getParentNode();
+                while(nx != nd) cyclePath.append(" -> ").append(nx.name());
                 // @error
                 // this node is in a cycle.
                 return false;
@@ -74,12 +76,13 @@ public class ClassGraph {
         nd.outTime = timer++;
     }
 
-    private boolean hasClass(String className) {
+    public boolean hasClass(String className) {
+        if (className == null) return false;
         return classNameToNode.containsKey(className);
     }
 
     private boolean updateEdges() {
-        for (Node nd : classNameToNode.values()) {
+        for (Node nd : classNameToNode.values()) if(nd != rootNode) {
 
             String parentName = nd.getAstClass().parent;
 // @check no parent is null or Object
@@ -113,6 +116,7 @@ public class ClassGraph {
             a = a.getParentNode();
         return a;
     }
+
     public Node getLCANode(String a, String b) {
         return getLCA(getNode(a), getNode(b));
     }
@@ -190,6 +194,7 @@ public class ClassGraph {
         private AST.class_ astClass;
         private Node parent;
         private List<Node> children;
+        public HashMap<String, AST.method> methods;
 
         private int inTime, outTime;
         private int depth;
@@ -208,6 +213,10 @@ public class ClassGraph {
 
         public AST.class_ getAstClass() {
             return astClass;
+        }
+
+        public AST.method getMethod(String s) {
+            return methods.get(s);
         }
 
         public void addChild(Node child) {

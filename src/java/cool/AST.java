@@ -7,7 +7,7 @@ public class AST {
 	abstract public static class ASTNode {
 		int lineNo;
 
-		abstract public void accept(ASTVisitor<?> visitor);
+		abstract public void accept(ASTVisitor visitor);
 	}
 
 	public static String sp = "  ";
@@ -32,7 +32,7 @@ public class AST {
 			return "";
 		};
 
-		abstract public void accept(ASTVisitor<?> visitor);
+		abstract public void accept(ASTVisitor visitor);
 	}
 
 	public static class no_expr extends expression {
@@ -44,7 +44,7 @@ public class AST {
 			return space + "#" + lineNo + "\n" + space + "_no_expr\n" + space + ": " + type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 	}
@@ -62,7 +62,7 @@ public class AST {
 					+ ": " + type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -81,7 +81,7 @@ public class AST {
 					+ escapeSpecialCharacters(value) + "\"" + "\n" + space + ": " + type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -99,7 +99,7 @@ public class AST {
 			return space + "#" + lineNo + "\n" + space + "_int\n" + space + sp + value + "\n" + space + ": " + type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -117,7 +117,7 @@ public class AST {
 			return space + "#" + lineNo + "\n" + space + "_object\n" + space + sp + name + "\n" + space + ": " + type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -136,7 +136,7 @@ public class AST {
 					+ type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -157,7 +157,7 @@ public class AST {
 					+ e2.getString(space + sp) + "\n" + space + ": " + type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -178,7 +178,7 @@ public class AST {
 					+ e2.getString(space + sp) + "\n" + space + ": " + type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -199,7 +199,7 @@ public class AST {
 					+ e2.getString(space + sp) + "\n" + space + ": " + type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -218,7 +218,7 @@ public class AST {
 					+ type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -239,7 +239,7 @@ public class AST {
 					+ e2.getString(space + sp) + "\n" + space + ": " + type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -260,7 +260,7 @@ public class AST {
 					+ e2.getString(space + sp) + "\n" + space + ": " + type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -281,7 +281,7 @@ public class AST {
 					+ e2.getString(space + sp) + "\n" + space + ": " + type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -302,7 +302,7 @@ public class AST {
 					+ e2.getString(space + sp) + "\n" + space + ": " + type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -321,7 +321,7 @@ public class AST {
 					+ type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -339,7 +339,7 @@ public class AST {
 			return space + "#" + lineNo + "\n" + space + "_new\n" + space + sp + typeid + "\n" + space + ": " + type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -360,7 +360,7 @@ public class AST {
 					+ e1.getString(space + sp) + "\n" + space + ": " + type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -383,7 +383,7 @@ public class AST {
 			return str;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -404,7 +404,7 @@ public class AST {
 					+ body.getString(space + sp) + "\n" + space + ": " + type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -427,7 +427,7 @@ public class AST {
 					+ ifbody.getString(space + sp) + "\n" + elsebody.getString(space + sp) + "\n" + space + ": " + type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -453,7 +453,7 @@ public class AST {
 					+ type;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -482,7 +482,7 @@ public class AST {
 			return str;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -513,7 +513,7 @@ public class AST {
 			return str;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -538,7 +538,7 @@ public class AST {
 			return str;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -561,7 +561,7 @@ public class AST {
 					+ "\n" + value.getString(space + sp);
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -581,7 +581,7 @@ public class AST {
 			return space + "#" + lineNo + "\n" + space + "_formal\n" + space + sp + name + "\n" + space + sp + typeid;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -595,7 +595,7 @@ public class AST {
 			return "";
 		}
 
-		abstract public void accept(ASTVisitor<?> visitor);
+		abstract public void accept(ASTVisitor visitor);
 	}
 
 	public static class method extends feature {
@@ -621,7 +621,7 @@ public class AST {
 			return str;
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -644,7 +644,7 @@ public class AST {
 					+ "\n" + value.getString(space + sp);
 		}
 
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -675,7 +675,7 @@ public class AST {
 			str += space + sp + ")";
 			return str;
 		}
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 
@@ -699,7 +699,7 @@ public class AST {
 
 			return str;
 		}
-		public void accept(ASTVisitor<?> visitor) {
+		public void accept(ASTVisitor visitor) {
 			visitor.visit(this);
 		}
 	}
