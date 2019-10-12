@@ -17,9 +17,9 @@ public class ClassGraph {
      * Constructor
      */
     public ClassGraph() {
-        addBasicClasses();
         classNameToNode = new HashMap<>();
         noInheritList   = Arrays.asList("Int", "String", "Bool");
+        addBasicClasses();
     }
 
 
@@ -123,8 +123,9 @@ public class ClassGraph {
     
 
     public void addClass(AST.class_ astClass) {
+
         if(classNameToNode.containsKey(astClass.name)) {
-            // @error
+        // @error
         } else if (isRestrictedInheritance(astClass)) {
             // @error
         } else {
@@ -149,6 +150,7 @@ public class ClassGraph {
         AST.class_ obj = new AST.class_("Object", null, null, obj_features, -1);
         
         rootNode = new Node(obj);
+        classNameToNode.put("Object", rootNode);
     }
 
     private void addIO() {
@@ -196,14 +198,15 @@ public class ClassGraph {
         private List<Node> children;
         public HashMap<String, AST.method> methods;
 
-        private int inTime, outTime;
-        private int depth;
+        public int inTime, outTime;
+        public int depth;
 
         public Node(AST.class_ astClass) {
             this.astClass = astClass;
             this.parent = null;
             this.inTime  = 0;
             this.outTime = 0;
+            this.methods = new HashMap<>();
             children = new ArrayList<>();
         }
 

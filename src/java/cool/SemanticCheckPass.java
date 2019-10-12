@@ -23,7 +23,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     }
 
     @Override
-    public Object visit(AST.program program_node) {
+    public void visit(AST.program program_node) {
         // TODO Auto-generated method stub
 
         ClassGraph.Node rootNode = graph.getNode("Object");
@@ -34,46 +34,52 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     }
 
-
     /**
      * Generated a fake id for the recovery routines.
+     * 
      * @return fake id
      */
     private String generateNewId() {
-        n+=1;
+        n += 1;
         return n.toString();
     }
 
     /**
      * validates typeid. Sets them to Object in case of error.
+     * 
      * @param typeid
      * @param lineNo
      * @return
      */
     private String validateType(String typeid, int lineNo) {
-        if(!graph.hasClass(typeid))  {
-            ErrorHandler.reportError(currClass.filename, lineNo, "No type named "+typeid+". Recovery by setting it to Object.");
+        if (!graph.hasClass(typeid)) {
+            ErrorHandler.reportError(currClass.filename, lineNo,
+                    "No type named " + typeid + ". Recovery by setting it to Object.");
             return "Object";
         }
         return typeid;
     }
 
     /**
-     * Validates the method signature and implements several recovery routines in case of error.
+     * Validates the method signature and implements several recovery routines in
+     * case of error.
+     * 
      * @param mthd
      */
     private void validateMethodSignature(AST.method mthd) {
-        if(mthd.name.equals("self")) {
-            ErrorHandler.reportError(currClass.filename, mthd.lineNo, "Method can't have name 'self'. Recovery by setting fake id.");
+        if (mthd.name.equals("self")) {
+            ErrorHandler.reportError(currClass.filename, mthd.lineNo,
+                    "Method can't have name 'self'. Recovery by setting fake id.");
             mthd.name = generateNewId();
         }
 
         mthd.typeid = validateType(mthd.typeid, mthd.lineNo);
 
-        for(AST.formal fm: mthd.formals) {
+        for (AST.formal fm : mthd.formals) {
 
-            if(fm.name.equals("self")) {
-                ErrorHandler.reportError(currClass.filename, fm.lineNo, "Formal can't have name 'self'. Recovery by setting fake id.");
+            if (fm.name.equals("self")) {
+                ErrorHandler.reportError(currClass.filename, fm.lineNo,
+                        "Formal can't have name 'self'. Recovery by setting fake id.");
                 fm.name = generateNewId();
             }
             fm.typeid = validateType(fm.typeid, fm.lineNo);
@@ -81,67 +87,71 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     }
 
     private boolean isSameMethodSignature(AST.method a, AST.method b) {
-        if( a.typeid!=b.typeid ||  a.formals.size()!=b.formals.size() ) {
-            ErrorHandler.reportError(currClass.filename, b.lineNo, "Method signature doesn't match. Recovery by skipping it.");
+        if (a.typeid != b.typeid || a.formals.size() != b.formals.size()) {
+            ErrorHandler.reportError(currClass.filename, b.lineNo,
+                    "Method signature doesn't match. Recovery by skipping it.");
             return false;
         }
-        for( int i = 0; i < a.formals.size(); ++i) {
-            if(a.formals.get(i).typeid != b.formals.get(i).typeid) {
-                ErrorHandler.reportError(currClass.filename, b.lineNo, "Method signature doesn't match. Recovery by skipping it.");
+        for (int i = 0; i < a.formals.size(); ++i) {
+            if (a.formals.get(i).typeid != b.formals.get(i).typeid) {
+                ErrorHandler.reportError(currClass.filename, b.lineNo,
+                        "Method signature doesn't match. Recovery by skipping it.");
                 return false;
             }
         }
         return true;
     }
 
-
     private void updateFeaturelistDFS(Node node) {
 
         this.currClass = node.getAstClass();
         List<AST.feature> ftList = node.getAstClass().features;
-
+        ClassGraph.Node parentNode = node.getParentNode();
         for (AST.feature ft : node.getAstClass().features) {
-            if(ft instanceof AST.method) {
-                AST.method mthd = (AST.method)ft;
+            if (ft instanceof AST.method) {
+                AST.method mthd = (AST.method) ft;
                 validateMethodSignature(mthd);
-                AST.method parentMthd = node.getParentNode().getMethod(mthd.name);
+                //                                      hax for handling Object
+                AST.method parentMthd = ( parentNode == null ? null : parentNode.getMethod(mthd.name) );
 
-                if(parentMthd != null) { // Attempt to redefine parent method
-                    if(!isSameMethodSignature(parentMthd, mthd)) { // Incorrect redfinition
-                        ftList.remove(ft);
+                if (parentMthd != null) { // Attempt to redefine parent method
+                    if (!isSameMethodSignature(parentMthd, mthd)) { // Incorrect redfinition
+                        ftList.remove(ft); // remove this method if it is incompatible.
                     }
                 } else { // fresh method defintion
                     node.methods.put(mthd.name, mthd);
                 }
             }
         }
+        // hax : i'm putting in the parent's 'AST.method' as value. But shouldn't matter
+        // as we only care about signature.
+        if(parentNode != null) node.methods.putAll(parentNode.methods);
 
-        // hax : i'm putting in the parent's 'AST.method' as value. But shouldn't matter as we only care about signature.
-        node.methods.putAll(node.getParentNode().methods);
-
+        for (ClassGraph.Node ch : node.getChildNodes()) {
+            updateFeaturelistDFS(ch);
+        }
     }
 
     private void visitClassesDFS(Node node) {
-        objScopeTable.enterScope();
-
-        node.getAstClass().accept(this);
-
+                
         for (ClassGraph.Node ch : node.getChildNodes()) {
+            objScopeTable.enterScope();
+            ch.getAstClass().accept(this);
             visitClassesDFS(ch);
+            objScopeTable.exitScope();
         }
 
-        objScopeTable.exitScope();
-
     }
 
     @Override
-    public Object visit(class_ class__node) {
-        graph.addClass(class__node);
-        return super.visit(class__node);
+    public void visit(class_ class__node) {
+        
+        // graph.addClass(class__node);
+        super.visit(class__node);
     }
 
     @Override
-    public Object visit(method method_node) {
+    public void visit(method method_node) {
         // TODO Auto-generated method stub
         // return super.visit(method_node);
 
@@ -193,7 +203,6 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     public void visit(AST.leq leq_node) {
         leq_node.e1.accept(this);
         leq_node.e2.accept(this);
-
 
     }
 
