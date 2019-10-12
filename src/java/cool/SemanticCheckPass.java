@@ -2,12 +2,6 @@ package cool;
 
 import java.util.*;
 
-import cool.AST.class_;
-import cool.AST.method;
-import cool.ClassGraph.Node;
-
-// import cool.AST.program;
-
 public class SemanticCheckPass extends ASTBaseVisitor {
 
     ClassGraph graph;
@@ -220,7 +214,8 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         method_node.body.accept(this);
 
         if(!(method_node.body instanceof AST.no_expr) && !graph.isAncestor(method_node.typeid, method_node.body.type)) {
-            ErrorHandler.reportError(currClass.filename, method_node.lineNo, "Inferred return type doesn't conform to the declared one.");
+            ErrorHandler.reportError(currClass.filename, method_node.lineNo, "Inferred return type "+method_node.body.type
+                                                            + " doesn't conform to the declared "+method_node.typeid);
         }
 
         objScopeTable.exitScope();
@@ -590,13 +585,10 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
         }
 
+        let_node.body.accept(this);
         let_node.type = let_node.body.type;
 
-        let_node.body.accept(this);
-        
-
         objScopeTable.exitScope();
-
     }
 
     @Override
