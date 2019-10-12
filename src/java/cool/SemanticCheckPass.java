@@ -80,11 +80,6 @@ public class SemanticCheckPass extends ASTBaseVisitor {
      * @param mthd
      */
     private void validateMethodSignature(AST.method mthd) {
-        if (mthd.name.equals("self")) {
-            ErrorHandler.reportError(currClass.filename, mthd.lineNo,
-                    "Method can't have name 'self'. Recovery by setting fake id.");
-            mthd.name = generateNewId();
-        }
 
         mthd.typeid = validateType(mthd.typeid, mthd.lineNo);
 
@@ -100,7 +95,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     }
 
     private boolean isSameMethodSignature(AST.method a, AST.method b) {
-        if (a.typeid != b.typeid || a.formals.size() != b.formals.size()) {
+        if (!a.typeid.equals(b.typeid) || (a.formals.size() != b.formals.size())) {
             ErrorHandler.reportError(currClass.filename, b.lineNo,
                     "Method signature doesn't match. Recovery by skipping it.");
             return false;
@@ -164,7 +159,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     @Override
     public void visit(AST.class_ class__node) {
 
-        System.out.println("Visiting class " + class__node.lineNo);
+        // System.out.println("Visiting class " + class__node.lineNo);
 
         objScopeTable.insert("self", class__node.name);
 
@@ -191,7 +186,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     @Override
     public void visit(AST.attr attr_node) {
 
-        System.out.println("Visiting attr " + attr_node.lineNo);
+        // System.out.println("Visiting attr " + attr_node.lineNo);
 
         if(attr_node.name.equals("self")) {
             ErrorHandler.reportError(currClass.filename, attr_node.lineNo, "Attribute can't have name 'self'. "
@@ -215,23 +210,21 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     @Override
     public void visit(AST.method method_node) {
 
-        System.out.println("Visiting method " + method_node.lineNo);
+        // System.out.println("Visiting method " + method_node.lineNo);
 
         objScopeTable.enterScope();
 
         for(AST.formal fm : method_node.formals) {
             fm.accept(this);
         }
-
         method_node.body.accept(this);
-
         objScopeTable.exitScope();
     }
     
     @Override
     public void visit(AST.formal formal_node) {
 
-        System.out.println("Visiting formal " + formal_node.lineNo);
+        // System.out.println("Visiting formal " + formal_node.lineNo);
 
         if (formal_node.name.equals("self")) {
             ErrorHandler.reportError(currClass.filename, formal_node.lineNo, "Formal can't have name 'self'");
@@ -248,7 +241,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     @Override
     public void visit(AST.branch branch_node) {
 
-        System.out.println("Visiting branch " + branch_node.lineNo);
+        // System.out.println("Visiting branch " + branch_node.lineNo);
 
         objScopeTable.enterScope();
 
@@ -267,28 +260,28 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.no_expr no_expr_node) {
-        System.out.println("Visiting no_epxr " + no_expr_node.lineNo);
+        // System.out.println("Visiting no_epxr " + no_expr_node.lineNo);
 
         no_expr_node.type = "_no_type";
     }
 
     @Override
     public void visit(AST.bool_const bool_const_node) {
-        System.out.println("Visiting bool_const " + bool_const_node.lineNo);
+        // System.out.println("Visiting bool_const " + bool_const_node.lineNo);
 
         bool_const_node.type = "Bool";
     }
 
     @Override
     public void visit(AST.string_const string_const_node) {
-        System.out.println("Visiting string_const " + string_const_node.lineNo);
+        // System.out.println("Visiting string_const " + string_const_node.lineNo);
 
         string_const_node.type = "String";
     }
 
     @Override
     public void visit(AST.int_const int_const_node) {
-        System.out.println("Visiting inst_const " + int_const_node.lineNo);
+        // System.out.println("Visiting inst_const " + int_const_node.lineNo);
 
         int_const_node.type = "Int";
     }
@@ -296,7 +289,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     @Override
     public void visit(AST.object object_node) {
 
-        System.out.println("Visiting object " + object_node.lineNo);
+        // System.out.println("Visiting object " + object_node.lineNo);
 
 
         String type = objScopeTable.lookUpGlobal(object_node.name);
@@ -316,7 +309,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     @Override
     public void visit(AST.comp comp_node) {
 
-        System.out.println("Visiting comp_node " + comp_node.lineNo);
+        // System.out.println("Visiting comp_node " + comp_node.lineNo);
 
         comp_node.e1.accept(this);
         if(!comp_node.e1.type.equals("Bool")) {
@@ -330,7 +323,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.eq eq_node) {
-        System.out.println("Visiting eq_node " + eq_node.lineNo);
+        // System.out.println("Visiting eq_node " + eq_node.lineNo);
 
         eq_node.e1.accept(this);
         eq_node.e2.accept(this);
@@ -371,7 +364,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.leq leq_node) {
-        System.out.println("Visiting leq_node " + leq_node.lineNo);
+        // System.out.println("Visiting leq_node " + leq_node.lineNo);
 
         leq_node.e1.accept(this);
         leq_node.e2.accept(this);
@@ -384,7 +377,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.lt lt_node) {
-        System.out.println("Visiting lt_node " + lt_node.lineNo);
+        // System.out.println("Visiting lt_node " + lt_node.lineNo);
 
         lt_node.e1.accept(this);
         lt_node.e2.accept(this);
@@ -396,7 +389,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.neg neg_node) {
-        System.out.println("Visiting neg_node " + neg_node.lineNo);
+        // System.out.println("Visiting neg_node " + neg_node.lineNo);
 
         neg_node.e1.accept(this);
         if(!neg_node.e1.type.equals("Int")) {
@@ -409,7 +402,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     @Override
     public void visit(AST.divide divide_node) {
 
-        System.out.println("Visiting divide_node " + divide_node.lineNo);
+        // System.out.println("Visiting divide_node " + divide_node.lineNo);
 
 
         divide_node.e1.accept(this);
@@ -423,7 +416,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     @Override
     public void visit(AST.mul mul_node) {
 
-        System.out.println("Visiting mul_node " + mul_node.lineNo);
+        // System.out.println("Visiting mul_node " + mul_node.lineNo);
 
         mul_node.e1.accept(this);
         mul_node.e2.accept(this);
@@ -437,7 +430,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.sub sub_node) {
-        System.out.println("Visiting sub_node " + sub_node.lineNo);
+        // System.out.println("Visiting sub_node " + sub_node.lineNo);
 
         sub_node.e1.accept(this);
         sub_node.e2.accept(this);
@@ -451,7 +444,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     @Override
     public void visit(AST.plus plus_node) {
 
-        System.out.println("Visiting plus_node " + plus_node.lineNo);
+        // System.out.println("Visiting plus_node " + plus_node.lineNo);
 
         plus_node.e1.accept(this);
         plus_node.e2.accept(this);
@@ -465,7 +458,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.isvoid isvoid_node) {
-        System.out.println("Visiting isvoid_node " + isvoid_node.lineNo);
+        // System.out.println("Visiting isvoid_node " + isvoid_node.lineNo);
 
         isvoid_node.e1.accept(this);
 
@@ -474,7 +467,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.new_ new__node) {
-        System.out.println("Visiting new__node " + new__node.lineNo);
+        // System.out.println("Visiting new__node " + new__node.lineNo);
 
         if(!graph.hasClass(new__node.typeid)) {
             ErrorHandler.reportError(currClass.filename, new__node.lineNo,
@@ -488,7 +481,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.assign assign_node) {
-        System.out.println("Visiting assign_node " + assign_node.lineNo);
+        // System.out.println("Visiting assign_node " + assign_node.lineNo);
 
         assign_node.e1.accept(this);
     
@@ -515,7 +508,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.block block_node) {
-        System.out.println("Visiting block_node " + block_node.lineNo);
+        // System.out.println("Visiting block_node " + block_node.lineNo);
 
         for (AST.expression exp : block_node.l1)
             exp.accept(this);
@@ -526,7 +519,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.loop loop_node) {
-        System.out.println("Visiting loop_node " + loop_node.lineNo);
+        // System.out.println("Visiting loop_node " + loop_node.lineNo);
 
         loop_node.predicate.accept(this);
         loop_node.body.accept(this);
@@ -541,7 +534,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.cond cond_node) {
-        System.out.println("Visiting cond_node " + cond_node.lineNo);
+        // System.out.println("Visiting cond_node " + cond_node.lineNo);
 
         cond_node.predicate.accept(this);
         cond_node.ifbody.accept(this);
@@ -558,7 +551,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.let let_node) {
-        System.out.println("Visiting let_node " + let_node.lineNo);
+        // System.out.println("Visiting let_node " + let_node.lineNo);
 
         let_node.body.accept(this);
 
@@ -601,7 +594,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.dispatch dispatch_node) {
-        System.out.println("Visiting dispatch_node " + dispatch_node.lineNo);
+        // System.out.println("Visiting dispatch_node " + dispatch_node.lineNo);
 
         dispatch_node.caller.accept(this);
         for (AST.expression exp : dispatch_node.actuals)
@@ -644,7 +637,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.typcase typcase_node) {
-        System.out.println("Visiting typcase_node " + typcase_node.lineNo);
+        // System.out.println("Visiting typcase_node " + typcase_node.lineNo);
 
         typcase_node.predicate.accept(this);
         for (AST.branch br : typcase_node.branches)
@@ -672,7 +665,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.static_dispatch static_dispatch_node) {
-        System.out.println("Visiting static_dispatch_node " + static_dispatch_node.lineNo);
+        // System.out.println("Visiting static_dispatch_node " + static_dispatch_node.lineNo);
 
         static_dispatch_node.caller.accept(this);
         for (AST.expression exp : static_dispatch_node.actuals)
