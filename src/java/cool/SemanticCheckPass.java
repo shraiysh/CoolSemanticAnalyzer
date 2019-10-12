@@ -80,11 +80,6 @@ public class SemanticCheckPass extends ASTBaseVisitor {
      * @param mthd
      */
     private void validateMethodSignature(AST.method mthd) {
-        if (mthd.name.equals("self")) {
-            ErrorHandler.reportError(currClass.filename, mthd.lineNo,
-                    "Method can't have name 'self'. Recovery by setting fake id.");
-            mthd.name = generateNewId();
-        }
 
         mthd.typeid = validateType(mthd.typeid, mthd.lineNo);
 
@@ -100,7 +95,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     }
 
     private boolean isSameMethodSignature(AST.method a, AST.method b) {
-        if (a.typeid != b.typeid || a.formals.size() != b.formals.size()) {
+        if (!a.typeid.equals(b.typeid) || (a.formals.size() != b.formals.size())) {
             ErrorHandler.reportError(currClass.filename, b.lineNo,
                     "Method signature doesn't match. Recovery by skipping it.");
             return false;
@@ -222,9 +217,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         for(AST.formal fm : method_node.formals) {
             fm.accept(this);
         }
-
         method_node.body.accept(this);
-
         objScopeTable.exitScope();
     }
     
