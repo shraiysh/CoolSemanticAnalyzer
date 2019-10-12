@@ -147,6 +147,10 @@ public class ClassGraph {
         addInt();
     }
 
+    public boolean isBasicClass(String name) {
+        return Arrays.asList("Int", "Bool", "Object", "IO", "String").contains(name);
+    }
+
     private void addObject() {
         AST.method abort     = new AST.method("abort", new ArrayList<>(), "Object", null, -1);
         AST.method type_name = new AST.method("type_name", new ArrayList<>(), "String", null, -1);

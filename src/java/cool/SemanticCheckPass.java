@@ -152,7 +152,9 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         for (ClassGraph.Node ch : node.getChildNodes()) {
             this.currClass = ch.getAstClass();
             objScopeTable.enterScope();
-            ch.getAstClass().accept(this);
+            if(!graph.isBasicClass(ch.name())) {
+                ch.getAstClass().accept(this);
+            }
             visitClassesDFS(ch);
             objScopeTable.exitScope();
         }
@@ -180,6 +182,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         }
 
         for(AST.feature ft : class__node.features) if(ft instanceof AST.method) {
+            System.out.println(((AST.method)ft).name);
             ft.accept(this);
         }
     }
@@ -219,6 +222,8 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         for(AST.formal fm : method_node.formals) {
             fm.accept(this);
         }
+
+        method_node.body.accept(this);
 
         objScopeTable.exitScope();
     }
