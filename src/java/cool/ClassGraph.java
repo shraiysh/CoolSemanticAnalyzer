@@ -48,9 +48,10 @@ public class ClassGraph {
             if (nd.inTime == 0) {
                 StringBuilder cyclePath = new StringBuilder(nd.name());
                 Node nx = nd.getParentNode();
-                while(nx != nd) cyclePath.append(" -> ").append(nx.name());
-                // @error
-                // this node is in a cycle.
+                while(nx != nd) {
+                    cyclePath.append(" -> ").append(nx.name());
+                    nx = nx.getParentNode();
+                }
                 ErrorHandler.reportError(nd.getAstClass().filename, nd.getAstClass().lineNo,
                      "Cyclic dependency detected. These are involved in a cycle: "+ cyclePath.toString());
                 return;
