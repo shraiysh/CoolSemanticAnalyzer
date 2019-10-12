@@ -120,7 +120,8 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         this.currClass = node.getAstClass();
         List<AST.feature> ftList = node.getAstClass().features;
         ClassGraph.Node parentNode = node.getParentNode();
-        for (AST.feature ft : node.getAstClass().features) {
+        for (int i = 0; i < ftList.size(); i++) {
+            AST.feature ft = ftList.get(i);
             if (ft instanceof AST.method) {
                 AST.method mthd = (AST.method) ft;
                 validateMethodSignature(mthd);
@@ -130,6 +131,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
                 if (parentMthd != null) { // Attempt to redefine parent method
                     if (!isSameMethodSignature(parentMthd, mthd)) { // Incorrect redfinition
                         ftList.remove(ft); // remove this method if it is incompatible.
+                        i--;
                     }
                 } else { // fresh method defintion
                     node.methods.put(mthd.name, mthd);

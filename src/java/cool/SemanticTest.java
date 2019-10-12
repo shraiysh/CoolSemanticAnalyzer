@@ -88,7 +88,7 @@ public class SemanticTest {
 			System.err.println("Compilation halter due to semantic errors.");
 			return;
 		}
-		System.out.println(prog.value.getString(""));
+		// System.out.println(prog.value.getString(""));
 	}
 
 	public static void main(String args[]) throws Exception{

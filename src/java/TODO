@@ -1,0 +1,2 @@
+1. Scope table only variables => function re-declaration in child class?
+2. multiple declarations of same name in let => newer one over-writes older one
