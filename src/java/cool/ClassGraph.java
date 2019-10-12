@@ -28,6 +28,10 @@ public class ClassGraph {
         return new ArrayList<Node>(classNameToNode.values());
     }
 
+    public Node getNode(String className) {
+        return classNameToNode.get(className);
+    }
+
     /**
      * Preprocesses and analyzes the class graph.
      * @return  true if successful else false one rror
@@ -70,8 +74,8 @@ public class ClassGraph {
         nd.outTime = timer++;
     }
 
-    private boolean hasClass(String name) {
-        return classNameToNode.containsKey(name);
+    private boolean hasClass(String className) {
+        return classNameToNode.containsKey(className);
     }
 
     private boolean updateEdges() {
@@ -95,6 +99,24 @@ public class ClassGraph {
     private boolean isRestrictedInheritance(AST.class_ astClass) {
         return noInheritList.contains(astClass.parent);
     }
+
+    public boolean isAncestor(Node anc, Node nd) {
+        return anc.inTime < nd.inTime && nd.outTime < anc.outTime;
+    }
+
+    public boolean isAncestor(String anc, String nd) {
+        return isAncestor(getNode(anc), getNode(nd));
+    }
+
+    public Node getLCA(Node a, Node b) {
+        while(!isAncestor(a, b))
+            a = a.getParentNode();
+        return a;
+    }
+    public Node getLCANode(String a, String b) {
+        return getLCA(getNode(a), getNode(b));
+    }
+    
 
     public void addClass(AST.class_ astClass) {
         if(classNameToNode.containsKey(astClass.name)) {
