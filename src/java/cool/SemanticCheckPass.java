@@ -101,7 +101,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
             return false;
         }
         for (int i = 0; i < a.formals.size(); ++i) {
-            if (a.formals.get(i).typeid != b.formals.get(i).typeid) {
+            if (!a.formals.get(i).typeid.equals(b.formals.get(i).typeid)) {
                 ErrorHandler.reportError(currClass.filename, b.lineNo,
                         "Method signature doesn't match. Recovery by skipping it.");
                 return false;
@@ -218,6 +218,11 @@ public class SemanticCheckPass extends ASTBaseVisitor {
             fm.accept(this);
         }
         method_node.body.accept(this);
+
+        if(!(method_node.body instanceof AST.no_expr) && !graph.isAncestor(method_node.typeid, method_node.body.type)) {
+            ErrorHandler.reportError(currClass.filename, method_node.lineNo, "Inferred return type doesn't conform to the declared one.");
+        }
+
         objScopeTable.exitScope();
     }
     
