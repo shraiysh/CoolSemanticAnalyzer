@@ -679,7 +679,14 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
         String classname = static_dispatch_node.caller.type;
 
-        if(!graph.isAncestor(static_dispatch_node.typeid, static_dispatch_node.caller.type)) {
+        if(!graph.hasClass(classname)) {
+            ErrorHandler.reportError(currClass.name, static_dispatch_node.lineNo,
+               "Static dispatch to undefined class " + classname + ".");
+            static_dispatch_node.type = "Object";
+            return;
+        }
+
+        else if(!graph.isAncestor(static_dispatch_node.typeid, static_dispatch_node.caller.type)) {
             ErrorHandler.reportError(currClass.name, static_dispatch_node.lineNo,
                "Class " + static_dispatch_node.typeid + " is not an ancestor of the caller type " + static_dispatch_node.caller.type);
             static_dispatch_node.type = "Object";
@@ -692,25 +699,23 @@ public class SemanticCheckPass extends ASTBaseVisitor {
             ErrorHandler.reportError(currClass.filename, static_dispatch_node.lineNo,
                 "Method " + static_dispatch_node.name + "(...) not a feature of class " + classname);
             static_dispatch_node.type = "Object";
+            return;
         }
-        else {
+        // Check if the conforming calls
+        List<AST.expression> actuals = static_dispatch_node.actuals;
+        List<AST.formal> formals = method.formals;
 
-            // Check if the conforming calls
-            List<AST.expression> actuals = static_dispatch_node.actuals;
-            List<AST.formal> formals = method.formals;
-
-            for(int i = 0; i < actuals.size(); i++) {
-                if(i < formals.size()) {
-                    if(!graph.isAncestor(formals.get(i).typeid, actuals.get(i).type)) {
-                        ErrorHandler.reportError(currClass.filename, static_dispatch_node.lineNo,
-                            "Type mismatch for arg " + formals.get(i).name + 
-                            ". Formal : " + formals.get(i).typeid +
-                            ", Actual : " + actuals.get(i).type);
-                    }
+        for(int i = 0; i < actuals.size(); i++) {
+            if(i < formals.size()) {
+                if(!graph.isAncestor(formals.get(i).typeid, actuals.get(i).type)) {
+                    ErrorHandler.reportError(currClass.filename, static_dispatch_node.lineNo,
+                        "Type mismatch for arg " + formals.get(i).name + 
+                        ". Formal : " + formals.get(i).typeid +
+                        ", Actual : " + actuals.get(i).type);
                 }
             }
-            static_dispatch_node.type = method.typeid;
         }
+        static_dispatch_node.type = method.typeid;
     }
 
 }
