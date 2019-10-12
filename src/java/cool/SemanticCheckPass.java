@@ -252,6 +252,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
         if(branch_node.name.equals("self")) {
             ErrorHandler.reportError(currClass.filename, branch_node.lineNo, "Can't bind to 'self' in Case.");
+            // return;
         }
         branch_node.type = validateType(branch_node.type, branch_node.lineNo);
 
@@ -337,14 +338,14 @@ public class SemanticCheckPass extends ASTBaseVisitor {
             // Different types
 
             // Check int string bool
-            boolean first = eq_node.e1.type == "Int" ||
-                            eq_node.e1.type == "String" ||
-                            eq_node.e1.type == "Bool"
+            boolean first = eq_node.e1.type.equals("Int") ||
+                            eq_node.e1.type.equals("String") ||
+                            eq_node.e1.type.equals("Bool")
                             ;
 
-            boolean second = eq_node.e2.type == "Int" ||
-                             eq_node.e2.type == "String" ||
-                             eq_node.e2.type == "Bool"
+            boolean second = eq_node.e2.type.equals("Int") ||
+                             eq_node.e2.type.equals("String") ||
+                             eq_node.e2.type.equals("Bool")
                              ;
 
             if(first || second) {
@@ -590,9 +591,9 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
         }
 
-        let_node.type = let_node.body.type;
 
         let_node.body.accept(this);
+        let_node.type = let_node.body.type;
         
 
         objScopeTable.exitScope();
@@ -659,17 +660,15 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         for(AST.branch branch : typcase_node.branches) {
             if(type_list.contains(branch.type)) {
                 // Error
-                ErrorHandler.reportError(currClass.name, branch.lineNo,
+                ErrorHandler.reportError(currClass.filename, branch.lineNo,
                     "Two cases should not be same type in case expression");
             }
         }
 
-        typcase_node.branches.get(0).accept(this);
         typcase_node.type = typcase_node.branches.get(0).value.type;
 
         // accepting and joining types of other branches
         for(int i=1; i<typcase_node.branches.size(); i++) {
-            typcase_node.branches.get(i).accept(this);
             typcase_node.type = graph.getLCA(typcase_node.type, typcase_node.branches.get(i).value.type);
         }
     }
@@ -684,15 +683,15 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
         String classname = static_dispatch_node.caller.type;
 
-        if(!graph.hasClass(classname)) {
-            ErrorHandler.reportError(currClass.name, static_dispatch_node.lineNo,
-               "Static dispatch to undefined class " + classname + ".");
+        if(!graph.hasClass(static_dispatch_node.typeid)) {
+            ErrorHandler.reportError(currClass.filename, static_dispatch_node.lineNo,
+               "Static dispatch to undefined class " + static_dispatch_node.typeid + ".");
             static_dispatch_node.type = "Object";
             return;
         }
 
         else if(!graph.isAncestor(static_dispatch_node.typeid, static_dispatch_node.caller.type)) {
-            ErrorHandler.reportError(currClass.name, static_dispatch_node.lineNo,
+            ErrorHandler.reportError(currClass.filename, static_dispatch_node.lineNo,
                "Class " + static_dispatch_node.typeid + " is not an ancestor of the caller type " + static_dispatch_node.caller.type);
             static_dispatch_node.type = "Object";
             return;
@@ -709,6 +708,11 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         // Check if the conforming calls
         List<AST.expression> actuals = static_dispatch_node.actuals;
         List<AST.formal> formals = method.formals;
+
+        if(actuals.size() != formals.size()) {
+            ErrorHandler.reportError(currClass.filename, static_dispatch_node.lineNo,
+                "Method " + static_dispatch_node.name + " invoked with wrong number of arguments.");
+        }
 
         for(int i = 0; i < actuals.size(); i++) {
             if(i < formals.size()) {
