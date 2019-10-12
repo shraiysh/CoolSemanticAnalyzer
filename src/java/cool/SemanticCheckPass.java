@@ -1,12 +1,6 @@
 package cool;
 
-import java.util.List;
-
-import cool.AST.class_;
-import cool.AST.method;
-import cool.ClassGraph.Node;
-
-// import cool.AST.program;
+import java.util.*;
 
 public class SemanticCheckPass extends ASTBaseVisitor {
 
@@ -24,13 +18,26 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.program program_node) {
-        // TODO Auto-generated method stub
 
         ClassGraph.Node rootNode = graph.getNode("Object");
 
         updateFeaturelistDFS(rootNode);
         visitClassesDFS(rootNode);
-        // @check for Main and main
+
+        if (!graph.hasClass("Main")) {
+            ErrorHandler.reportError("No file", -1, "Main class absent in program.");
+        } else {
+            ClassGraph.Node m = graph.getNode("Main");
+            if (m.getMethod("main") == null) {
+                ErrorHandler.reportError(m.getAstClass().filename, m.getAstClass().lineNo, 
+                                            "main method absent inside Main class.");
+            } else {
+                if( m.getMethod("main").formals.size() != 0 ) {
+                    ErrorHandler.reportError(m.getAstClass().filename, m.getAstClass().lineNo,
+                                         "main method in Main class has non zero arguments.");
+                }
+            }
+        }
 
     }
 
@@ -102,7 +109,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         return true;
     }
 
-    private void updateFeaturelistDFS(Node node) {
+    private void updateFeaturelistDFS(ClassGraph.Node node) {
 
         this.currClass = node.getAstClass();
         List<AST.feature> ftList = node.getAstClass().features;
@@ -132,7 +139,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         }
     }
 
-    private void visitClassesDFS(Node node) {
+    private void visitClassesDFS(ClassGraph.Node node) {
                 
         for (ClassGraph.Node ch : node.getChildNodes()) {
             objScopeTable.enterScope();
@@ -144,20 +151,86 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     }
 
     @Override
-    public void visit(class_ class__node) {
-        
-        // graph.addClass(class__node);
-        super.visit(class__node);
+    public void visit(AST.class_ class__node) {
+        objScopeTable.insert("self", class__node.name);
+
+        for(AST.feature ft : class__node.features) if(ft instanceof AST.attr){
+            AST.attr at = (AST.attr)ft;
+            if(at.name.equals("self")) {
+                ErrorHandler.reportError(currClass.filename, at.lineNo, "Attribute can't have name 'self'. "
+                                                                        + "Recovery by skipping this one.");
+            } else if (objScopeTable.lookUpGlobal(at.name) != null) {
+                ErrorHandler.reportError(currClass.filename, at.lineNo, "Attribute "+at.name+" has been redefined. "
+                                                                        + "Recovery by skipping this one.");
+            } else { // good to go with this one
+                at.accept(this);
+            }
+        }
+
+        for(AST.feature ft : class__node.features) if(ft instanceof AST.method) {
+            ft.accept(this);
+        }
     }
+
 
     @Override
-    public void visit(method method_node) {
-        // TODO Auto-generated method stub
-        // return super.visit(method_node);
+    public void visit(AST.attr attr_node) {
+        if(attr_node.name.equals("self")) {
+            ErrorHandler.reportError(currClass.filename, attr_node.lineNo, "Attribute can't have name 'self'. "
+                                                                            +"Recovery by skipping this one.");
+        } else if (!graph.hasClass(attr_node.name)) {
+            attr_node.typeid = validateType(attr_node.typeid, attr_node.lineNo);
+            objScopeTable.insert(attr_node.name, attr_node.typeid);
+            attr_node.value.accept(this);
+        } else {
+            objScopeTable.insert(attr_node.name, attr_node.typeid);
+            attr_node.value.accept(this);
 
+            // If assignment has been done && doesn't conform
+            if(!(attr_node.value instanceof AST.no_expr) && !graph.isAncestor(attr_node.typeid, attr_node.value.type)) {
+                ErrorHandler.reportError(currClass.filename, attr_node.lineNo, "Expression doesnt conform to type of Attribute.");
+            }
+        }
     }
 
 
+    @Override
+    public void visit(AST.method method_node) {
+        objScopeTable.enterScope();
+
+        for(AST.formal fm : method_node.formals) {
+            fm.accept(this);
+        }
+
+        objScopeTable.exitScope();
+    }
+    
+    @Override
+    public void visit(AST.formal formal_node) {
+        if (formal_node.name.equals("self")) {
+            ErrorHandler.reportError(currClass.filename, formal_node.lineNo, "Formal can't have name 'self'");
+        } else if (objScopeTable.lookUpLocal(formal_node.name) != null) {
+            ErrorHandler.reportError(currClass.filename, formal_node.lineNo, "Formal " + formal_node.name
+                                                                                + " has multiple declarations.");
+        } else {
+            formal_node.typeid = validateType(formal_node.typeid, formal_node.lineNo);
+            objScopeTable.insert(formal_node.name, formal_node.typeid);
+        }
+    }
+    
+    
+    @Override
+    public void visit(AST.branch branch_node) {
+        objScopeTable.enterScope();
+
+        if(branch_node.name.equals("self")) {
+            ErrorHandler.reportError(currClass.filename, branch_node.lineNo, "Can't bind to 'self' in Case.");
+        }
+        branch_node.type = validateType(branch_node.type, branch_node.lineNo);
+
+        branch_node.value.accept(this);
+        objScopeTable.exitScope();
+    }
 
     // For Shrey --- below
 
