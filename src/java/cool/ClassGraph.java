@@ -131,7 +131,7 @@ public class ClassGraph {
 
         if(classNameToNode.containsKey(astClass.name)) {
             ErrorHandler.reportError(astClass.filename, astClass.lineNo, "Class "+astClass.name 
-                                                                        + "defined multiple times.");
+                                                                        + " defined multiple times.");
         } else if (isRestrictedInheritance(astClass)) {
             ErrorHandler.reportError(astClass.filename, astClass.lineNo, "Can't inherit from "+astClass.parent);
         } else {
