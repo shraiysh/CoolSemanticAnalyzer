@@ -161,14 +161,17 @@ public class SemanticCheckPass extends ASTBaseVisitor {
                 validateMethodSignature(mthd);
                 AST.method parentMthd = ( parentNode == null ? null : parentNode.getMethod(mthd.name) );
 
-                if (parentMthd != null) { // if there is attempt to redefine parent method
+                if (parentMthd != null) { 
+                    // if there is attempt to redefine parent method
                     if (isSameMethodSignature(parentMthd, mthd)) { // Correct redfinition
                         node.methods.put(mthd.name, mthd);
                     }
-                } else if (node.getMethodLocal(mthd.name) != null) { // Has already been defined in this class
+                } else if (node.getMethodLocal(mthd.name) != null) { 
+                    // Has already been defined in this class
                     ErrorHandler.reportError(currClass.filename, mthd.lineNo, "Method "+mthd.name
                                                                         +" has multiple definitions." );
-                } else { // fresh method defintion
+                } else { 
+                    // fresh method defintion
                     node.methods.put(mthd.name, mthd);
                 }
             }
@@ -215,10 +218,10 @@ public class SemanticCheckPass extends ASTBaseVisitor {
             AST.attr at = (AST.attr)ft;
             if(at.name.equals("self")) {
                 ErrorHandler.reportError(currClass.filename, at.lineNo, "Attribute can't have name 'self'. "
-                                                                        + "Recovery by skipping this one.");
+                                                                        + "Recovery by discarding this one.");
             } else if (objScopeTable.lookUpGlobal(at.name) != null) {
                 ErrorHandler.reportError(currClass.filename, at.lineNo, "Attribute "+at.name+" has been redefined. "
-                                                                        + "Recovery by skipping this one.");
+                                                                        + "Recovery by discarding this one.");
             } else { // good to go with this one
                 at.accept(this);
             }
@@ -241,8 +244,11 @@ public class SemanticCheckPass extends ASTBaseVisitor {
             attr_node.value.accept(this);
 
             // If assignment has been done && doesn't conform
-            if(!(attr_node.value instanceof AST.no_expr) && !graph.isAncestor(attr_node.typeid, attr_node.value.type)) {
-                ErrorHandler.reportError(currClass.filename, attr_node.lineNo, "Expression doesnt conform to type of Attribute.");
+            if(    !(attr_node.value instanceof AST.no_expr) 
+                && !graph.isAncestor(attr_node.typeid, attr_node.value.type)) {
+
+                    ErrorHandler.reportError(currClass.filename, attr_node.lineNo, 
+                    "Expression doesnt conform to type of Attribute.");
             }
         }
     }
@@ -258,9 +264,12 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         }
         method_node.body.accept(this);
 
-        if(!(method_node.body instanceof AST.no_expr) && !graph.isAncestor(method_node.typeid, method_node.body.type)) {
-            ErrorHandler.reportError(currClass.filename, method_node.lineNo, "Inferred return type "+method_node.body.type
-                                                            + " doesn't conform to the declared "+method_node.typeid);
+        if (     !(method_node.body instanceof AST.no_expr) 
+             &&  !graph.isAncestor(method_node.typeid, method_node.body.type)) {
+
+                ErrorHandler.reportError(currClass.filename, method_node.lineNo,
+                     "Inferred return type "+method_node.body.type
+                   + " doesn't conform to the declared "+method_node.typeid);
         }
 
         objScopeTable.exitScope();
@@ -270,13 +279,18 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     public void visit(AST.formal formal_node) {
 
         if (formal_node.name.equals("self")) {
+            // Name can't be self
             ErrorHandler.reportError(currClass.filename, formal_node.lineNo, "Formal can't have name 'self'");
+
         } else if (objScopeTable.lookUpLocal(formal_node.name) != null) {
+            // Redefinition
             ErrorHandler.reportError(currClass.filename, formal_node.lineNo, "Formal " + formal_node.name
                                                                                 + " has multiple declarations.");
         } else {
+            // is correct
             formal_node.typeid = validateType(formal_node.typeid, formal_node.lineNo);
             objScopeTable.insert(formal_node.name, formal_node.typeid);
+
         }
     }
     
@@ -290,7 +304,6 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
         if(branch_node.name.equals("self")) {
             ErrorHandler.reportError(currClass.filename, branch_node.lineNo, "Can't bind to 'self' in Case.");
-            // return;
         }
         branch_node.type = validateType(branch_node.type, branch_node.lineNo);
 
@@ -346,7 +359,8 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         else {
             // RECOVERY : Give it the object type
             object_node.type = "Object";
-            ErrorHandler.reportError(currClass.filename, object_node.lineNo, "Undeclared identifier " + object_node.name);
+            ErrorHandler.reportError(currClass.filename, object_node.lineNo, 
+                                        "Undeclared identifier " + object_node.name);
         }
     }
 
@@ -542,7 +556,9 @@ public class SemanticCheckPass extends ASTBaseVisitor {
             }
             else if(!graph.isAncestor(type, assign_node.e1.type)) {
                 ErrorHandler.reportError(currClass.filename, assign_node.lineNo,
-                    "Type " + assign_node.e1.type + " of assigned expression does not conform to declared type " + type + " of identifier " + assign_node.name + ".");
+                    "Type " + assign_node.e1.type + 
+                    " of assigned expression does not conform to declared type " + type + 
+                    " of identifier " + assign_node.name + ".");
             }
         }
 
@@ -623,7 +639,9 @@ public class SemanticCheckPass extends ASTBaseVisitor {
                 if(!graph.isAncestor(type, let_node.value.type)) {
                     // Not Conforming
                     ErrorHandler.reportError(currClass.filename, let_node.lineNo,
-                        "Type " + let_node.value.type + " of assigned expression does not conform to declared type " + type + " of identifier " + let_node.name + ".");                
+                        "Type " + let_node.value.type + 
+                        " of assigned expression does not conform to declared type " + type 
+                        + " of identifier " + let_node.name + ".");                
                 }
             }
 
@@ -727,7 +745,8 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
         else if(!graph.isAncestor(static_dispatch_node.typeid, static_dispatch_node.caller.type)) {
             ErrorHandler.reportError(currClass.filename, static_dispatch_node.lineNo,
-               "Class " + static_dispatch_node.typeid + " is not an ancestor of the caller type " + static_dispatch_node.caller.type);
+               "Class " + static_dispatch_node.typeid + " is not an ancestor of the caller type " 
+               + static_dispatch_node.caller.type);
             static_dispatch_node.type = "Object";
             return;
         }
