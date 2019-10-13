@@ -7,11 +7,10 @@ import java.util.List;
 
 public class ClassGraph {
 
-    private Node rootNode;
-    private HashMap<String, Node> classNameToNode;
-
-    private List<String> noInheritList;
-    int timer;
+    private Node rootNode;                         // The root node "Object: of the Tree
+    private HashMap<String, Node> classNameToNode; // Map from class name to class Node
+    private List<String> noInheritList;            // Classes we can't inherit from
+    int timer;                                     // Helper for the DFS algorithm
 
     /**
      * Constructor
@@ -22,33 +21,40 @@ public class ClassGraph {
         addBasicClasses();
     }
 
-
+    /**
+     * Returns a list of Class nodes
+     */
     public List<Node> getNodeList() {
         return new ArrayList<Node>(classNameToNode.values());
     }
 
+    /**
+     * Returns corresponding node
+     * @param className
+     * @return
+     */
     public Node getNode(String className) {
         return classNameToNode.get(className);
     }
 
     /**
      * Preprocesses and analyzes the class graph.
-     * @return  true if successful else false one rror
      */
     public void analyze() {
 
+        // If error occurred while adding classes, bail
         if (ErrorHandler.getErrorFlag()) return;
 
-        updateEdges();
+        updateEdges(); // Inform parents about their children
 
         timer = 1;
-        runDFS(rootNode, 0);
+        runDFS(rootNode, 0); // Runs the DFS algorithm for precomputation.
         
         for(Node nd : getNodeList()) {
-            if (nd.inTime == 0) {
+            if (nd.inTime == 0) { // An unvisited node will have inTime 0, and must be involved in a cycle.
                 StringBuilder cyclePath = new StringBuilder(nd.name());
                 Node nx = nd.getParentNode();
-                while(nx != nd) {
+                while(nx != nd) { // Stringify the loop
                     cyclePath.append(" -> ").append(nx.name());
                     nx = nx.getParentNode();
                 }
@@ -59,27 +65,33 @@ public class ClassGraph {
         }
     }
 
+    /**
+     * Rund the DFS algorithm. Computed in and out time.
+     */
     private void runDFS(Node nd, int d) {
         nd.inTime = timer++;
         nd.depth = d;
 
         for(Node ch : nd.getChildNodes()) {
-
-            // if(ch.inTime < nd.inTime) { // Not possible here. No need to check.
-            //     // @error BackEdge "Classes Cyclic Dependency"
-
-            //     return false;
-            // }
             runDFS(ch, d+1);
         }
         nd.outTime = timer++;
     }
 
+    /**
+     * Find whether this heirarchy contains a class
+     * @param className
+     * @return
+     */
     public boolean hasClass(String className) {
         if (className == null) return false;
         return classNameToNode.containsKey(className);
     }
 
+    /**
+     * Inform and update parents about children.
+     * Also check for inheritance from restricted nodes.
+     */
     private void updateEdges() {
         for (Node nd : classNameToNode.values()) if(nd != rootNode) {
 
@@ -89,8 +101,6 @@ public class ClassGraph {
                 nd.setParentNode(parentNode);
                 parentNode.addChild(nd);
             } else {
-                // Parent class was not defined.
-                // @error
                 ErrorHandler.reportError(nd.getAstClass().filename , nd.getAstClass().lineNo
                                     , "Parent class "+parentName+" of class "+nd.name()
                                     + " doesn't exist. Recovery by setting parent to 'Object'" );
@@ -100,15 +110,30 @@ public class ClassGraph {
         }
     }
 
+    /**
+     * Utility for checking if inheritance is Restricted
+     */
     private boolean isRestrictedInheritance(AST.class_ astClass) {
         return noInheritList.contains(astClass.parent);
     }
 
+    /**
+     * Check whether a node is ancestor of the other
+     * @param anc   The ancestor node
+     * @param nd    The child node
+     * @return
+     */
     public boolean isAncestor(Node anc, Node nd) {
         if(anc == null || nd == null) return false;
         return anc.inTime <= nd.inTime && nd.outTime <= anc.outTime;
     }
 
+    /**
+     * Check whether a class is ancestor of the other
+     * @param anc   The ancestor class name
+     * @param nd    The child class name
+     * @return
+     */
     public boolean isAncestor(String anc, String nd) {
         return isAncestor(getNode(anc), getNode(nd));
     }
@@ -148,6 +173,11 @@ public class ClassGraph {
         addInt();
     }
 
+    /**
+     * 
+     * @param name
+     * @return
+     */
     public boolean isBasicClass(String name) {
         return Arrays.asList("Int", "Bool", "Object", "IO", "String").contains(name);
     }
