@@ -158,11 +158,16 @@ public class SemanticCheckPass extends ASTBaseVisitor {
                 //                                      hax for handling Object
                 AST.method parentMthd = ( parentNode == null ? null : parentNode.getMethod(mthd.name) );
 
-                if (parentMthd != null) { // Attempt to redefine parent method
+                if (parentMthd != null) { // if there is attempt to redefine parent method
                     if (!isSameMethodSignature(parentMthd, mthd)) { // Incorrect redfinition
                         ftList.remove(ft); // remove this method if it is incompatible.
                         i--;
                     }
+                } else if (node.getMethod(mthd.name) != null) {
+                    ErrorHandler.reportError(currClass.filename, mthd.lineNo, "Method "+mthd.name
+                                                                        +" has multiple definitions." );
+                    ftList.remove(ft);
+                    i--;
                 } else { // fresh method defintion
                     node.methods.put(mthd.name, mthd);
                 }
@@ -235,7 +240,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         if(attr_node.name.equals("self")) {
             ErrorHandler.reportError(currClass.filename, attr_node.lineNo, "Attribute can't have name 'self'. "
                                                                             +"Recovery by skipping this one.");
-        } else if (!graph.hasClass(attr_node.name)) {
+        } else if (!graph.hasClass(attr_node.typeid)) {
             attr_node.typeid = validateType(attr_node.typeid, attr_node.lineNo);
             objScopeTable.insert(attr_node.name, attr_node.typeid);
             attr_node.value.accept(this);
@@ -262,7 +267,8 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         method_node.body.accept(this);
 
         if(!(method_node.body instanceof AST.no_expr) && !graph.isAncestor(method_node.typeid, method_node.body.type)) {
-            ErrorHandler.reportError(currClass.filename, method_node.lineNo, "Inferred return type doesn't conform to the declared one.");
+            ErrorHandler.reportError(currClass.filename, method_node.lineNo, "Inferred return type "+method_node.body.type
+                                                            + " doesn't conform to the declared "+method_node.typeid);
         }
 
         objScopeTable.exitScope();
@@ -631,13 +637,10 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
         }
 
-
         let_node.body.accept(this);
         let_node.type = let_node.body.type;
-        
 
         objScopeTable.exitScope();
-
     }
 
     @Override
