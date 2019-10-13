@@ -54,8 +54,9 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
         ClassGraph.Node rootNode = graph.getNode("Object");
 
-        updateFeaturelistDFS(rootNode);
-        visitClassesDFS(rootNode);
+        // System.out.println("Wow");
+        updateFeaturelistDFS(rootNode); // Precomputes methods for each class
+        visitClassesDFS(rootNode);      // Calls the visitors for class in correct order
 
         if (!graph.hasClass("Main")) {
             ErrorHandler.reportError("No file", -1, "Main class absent in program.");
@@ -132,52 +133,46 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     private boolean isSameMethodSignature(AST.method a, AST.method b) {
         if (!a.typeid.equals(b.typeid) || (a.formals.size() != b.formals.size())) {
             ErrorHandler.reportError(currClass.filename, b.lineNo,
-                    "Method signature doesn't match. Recovery by skipping it.");
+                    "Method signature doesn't match. Failed to override method");
             return false;
         }
         for (int i = 0; i < a.formals.size(); ++i) {
             if (!a.formals.get(i).typeid.equals(b.formals.get(i).typeid)) {
                 ErrorHandler.reportError(currClass.filename, b.lineNo,
-                        "Method signature doesn't match. Recovery by skipping it.");
+                        "Method signature doesn't match. Failed to override method");
                 return false;
             }
         }
         return true;
     }
 
+    /**
+     * Updated and precomputed methods for each class
+     * @param node
+     */
     private void updateFeaturelistDFS(ClassGraph.Node node) {
 
         this.currClass = node.getAstClass();
         List<AST.feature> ftList = node.getAstClass().features;
         ClassGraph.Node parentNode = node.getParentNode();
-        for (int i = 0; i < ftList.size(); i++) {
-            AST.feature ft = ftList.get(i);
-            if (ft instanceof AST.method) {
+        for (AST.feature ft : ftList) {
+            if(ft instanceof AST.method) {
                 AST.method mthd = (AST.method) ft;
                 validateMethodSignature(mthd);
-                //                                      hax for handling Object
                 AST.method parentMthd = ( parentNode == null ? null : parentNode.getMethod(mthd.name) );
 
                 if (parentMthd != null) { // if there is attempt to redefine parent method
-                    if (!isSameMethodSignature(parentMthd, mthd)) { // Incorrect redfinition
-                        ftList.remove(ft); // remove this method if it is incompatible.
-                        i--;
+                    if (isSameMethodSignature(parentMthd, mthd)) { // Correct redfinition
+                        node.methods.put(mthd.name, mthd);
                     }
-                } else if (node.getMethod(mthd.name) != null) {
+                } else if (node.getMethodLocal(mthd.name) != null) { // Has already been defined in this class
                     ErrorHandler.reportError(currClass.filename, mthd.lineNo, "Method "+mthd.name
                                                                         +" has multiple definitions." );
-                    ftList.remove(ft);
-                    i--;
                 } else { // fresh method defintion
                     node.methods.put(mthd.name, mthd);
                 }
             }
         }
-
-        // Parent's 'AST.method' is value. It shouldn't matter
-        // if we put parent's or child's because we only care about signature
-        // while analyzing
-        if(parentNode != null) node.methods.putAll(parentNode.methods);
 
         for (ClassGraph.Node ch : node.getChildNodes()) {
             updateFeaturelistDFS(ch);
