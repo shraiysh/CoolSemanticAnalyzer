@@ -138,21 +138,42 @@ public class ClassGraph {
         return isAncestor(getNode(anc), getNode(nd));
     }
 
+    /**
+     * Returns Least common ancestor of given nodes
+     * @param a
+     * @param b
+     * @return
+     */
     public Node getLCA(Node a, Node b) {
         while(!isAncestor(a, b))
             a = a.getParentNode();
         return a;
     }
 
+    /**
+     * Returns LCA Node taking Class names instead of nodes
+     * @param a
+     * @param b
+     * @return
+     */
     public Node getLCANode(String a, String b) {
         return getLCA(getNode(a), getNode(b));
     }
 
+    /**
+     * Returns LCA name taking Class names
+     * @param a
+     * @param b
+     * @return
+     */
     public String getLCA(String a, String b) {
         return getLCANode(a, b).name();
     }
     
-
+    /**
+     * Adds the astClass to the Tree
+     * @param astClass
+     */
     public void addClass(AST.class_ astClass) {
 
         if(classNameToNode.containsKey(astClass.name)) {
@@ -165,6 +186,9 @@ public class ClassGraph {
         }
     }
 
+    /**
+     * Add the 5 basic classes present implicitly in cool
+     */
     private void addBasicClasses() {
         addObject();
         addIO();
@@ -174,7 +198,7 @@ public class ClassGraph {
     }
 
     /**
-     * 
+     * Check whether given class is basic or not
      * @param name
      * @return
      */
@@ -195,8 +219,6 @@ public class ClassGraph {
     }
 
     private void addIO() {
-        // AST.method out_string 	= new AST.method("out_string", Arrays.asList(new AST.formal("x", "String", 1)), "SELF_TYPE", new AST.expression(), 1);
-		// AST.method out_int 		= new AST.method("out_int", Arrays.asList(new AST.formal("x", "Int", 1)), "SELF_TYPE", new AST.expression(), 1);
 		AST.method out_string 	= new AST.method("out_string", Arrays.asList(new AST.formal("x", "String", 1)), "IO", null, 1);
 		AST.method out_int 		= new AST.method("out_int", Arrays.asList(new AST.formal("x", "Int", 1)), "IO", null, 1);
 		AST.method in_string 	= new AST.method("in_string", new ArrayList<>(), "String", null, 1);
@@ -231,15 +253,17 @@ public class ClassGraph {
     }
 
 
-
+    /**
+     * Node class for internal tree management
+     */
     public static class Node {
         
-        private AST.class_ astClass;
-        private Node parent;
-        private List<Node> children;
-        public HashMap<String, AST.method> methods;
+        private AST.class_ astClass;                // Stores associated AST.class_
+        private Node parent;                        // Stores parent node
+        private List<Node> children;                // Stores child nodes
+        public HashMap<String, AST.method> methods; // Stores methods
 
-        public int inTime, outTime;
+        public int inTime, outTime;                 // For algorithmic storage
         public int depth;
 
         public Node(AST.class_ astClass) {
@@ -259,9 +283,20 @@ public class ClassGraph {
             return astClass;
         }
 
-        public AST.method getMethod(String s) {
+        public AST.method getMethodLocal(String s) {
             return methods.get(s);
         }
+
+        public AST.method getMethod(String s) {
+            Node nd = this;
+            while (nd != null) {
+                if(nd.methods.containsKey(s))
+                    return nd.methods.get(s);
+                nd = nd.parent;
+            }
+            return null;
+        }
+
 
         public void addChild(Node child) {
             children.add(child);
