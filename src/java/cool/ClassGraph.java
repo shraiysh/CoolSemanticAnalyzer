@@ -283,10 +283,20 @@ public class ClassGraph {
             return astClass;
         }
 
+        /**
+         * Returns it, if the current class has a method definition
+         * @param s Method name
+         * @return
+         */
         public AST.method getMethodLocal(String s) {
             return methods.get(s);
         }
 
+        /**
+         * Return the nearest  method by searching over all ancestors
+         * @param s
+         * @return
+         */
         public AST.method getMethod(String s) {
             Node nd = this;
             while (nd != null) {
