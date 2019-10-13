@@ -2,26 +2,53 @@ package cool;
 
 import java.util.*;
 
-import cool.AST.class_;
-import cool.AST.method;
-import cool.ClassGraph.Node;
-
-// import cool.AST.program;
-
+/**
+ * Class for semantic check pass - which is an AST Visitor
+ */
 public class SemanticCheckPass extends ASTBaseVisitor {
 
+    /**
+     * graph is the inheritance graph for the class
+     */
     ClassGraph graph;
+
+    /**
+     * currClass holds the current class that we are visiting.
+     * Mostly used while reporting errors
+     */
     AST.class_ currClass;
+
+    /**
+     * objScopeTable is the scope table for variables.
+     * It stores their name and datatype
+     */
     ScopeTable<String> objScopeTable;
+
+    /**
+     * Integer used for setting fake identifiers in error recovery from redeclarations
+     */
     Integer n;
 
+    /**
+     * Constructs the object.
+     *
+     * @param      graph  Inheritance class graph
+     */
     public SemanticCheckPass(ClassGraph graph) {
-        // graph = new ClassGraph();
         this.graph = graph;
         this.objScopeTable = new ScopeTable<String>();
         this.n = 1;
     }
 
+    /**
+     * Visit a program
+     * Ensures the following
+     *   - There exists a class named `Main'
+     *   - There exists a method named `main' for class `Main'
+     *   - The method `Main.main' has no formal arguments
+     *   
+     * @param      program_node  The program node
+     */
     @Override
     public void visit(AST.program program_node) {
 
@@ -94,6 +121,14 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         }
     }
 
+    /**
+     * Determines if same method signature.
+     *
+     * @param      a     First function
+     * @param      b     Second function
+     *
+     * @return     True if same method signature, False otherwise.
+     */
     private boolean isSameMethodSignature(AST.method a, AST.method b) {
         if (!a.typeid.equals(b.typeid) || (a.formals.size() != b.formals.size())) {
             ErrorHandler.reportError(currClass.filename, b.lineNo,
@@ -133,8 +168,10 @@ public class SemanticCheckPass extends ASTBaseVisitor {
                 }
             }
         }
-        // hax : i'm putting in the parent's 'AST.method' as value. But shouldn't matter
-        // as we only care about signature.
+
+        // Parent's 'AST.method' is value. It shouldn't matter
+        // if we put parent's or child's because we only care about signature
+        // while analyzing
         if(parentNode != null) node.methods.putAll(parentNode.methods);
 
         for (ClassGraph.Node ch : node.getChildNodes()) {
@@ -142,6 +179,11 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         }
     }
 
+    /**
+     * Visit all the classes, that are not Base classes (DFS)
+     *
+     * @param      node  The root class node
+     */
     private void visitClassesDFS(ClassGraph.Node node) {
                 
         for (ClassGraph.Node ch : node.getChildNodes()) {
@@ -156,10 +198,16 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     }
 
+    /**
+     * Visit a class - ensures the following:
+     *   - self should not be a declared attribute
+     *   - No attribute should be redefined (inherited or same class)
+     *   - check method and attributes
+     *
+     * @param      class__node  The class node
+     */
     @Override
     public void visit(AST.class_ class__node) {
-
-        // System.out.println("Visiting class " + class__node.lineNo);
 
         objScopeTable.insert("self", class__node.name);
 
@@ -177,16 +225,12 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         }
 
         for(AST.feature ft : class__node.features) if(ft instanceof AST.method) {
-            // System.out.println(((AST.method)ft).name);
             ft.accept(this);
         }
     }
 
-
     @Override
     public void visit(AST.attr attr_node) {
-
-        // System.out.println("Visiting attr " + attr_node.lineNo);
 
         if(attr_node.name.equals("self")) {
             ErrorHandler.reportError(currClass.filename, attr_node.lineNo, "Attribute can't have name 'self'. "
@@ -210,8 +254,6 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     @Override
     public void visit(AST.method method_node) {
 
-        // System.out.println("Visiting method " + method_node.lineNo);
-
         objScopeTable.enterScope();
 
         for(AST.formal fm : method_node.formals) {
@@ -228,8 +270,6 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     
     @Override
     public void visit(AST.formal formal_node) {
-
-        // System.out.println("Visiting formal " + formal_node.lineNo);
 
         if (formal_node.name.equals("self")) {
             ErrorHandler.reportError(currClass.filename, formal_node.lineNo, "Formal can't have name 'self'");
