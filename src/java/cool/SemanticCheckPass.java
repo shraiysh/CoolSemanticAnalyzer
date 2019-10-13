@@ -237,10 +237,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     @Override
     public void visit(AST.attr attr_node) {
 
-        if(attr_node.name.equals("self")) {
-            ErrorHandler.reportError(currClass.filename, attr_node.lineNo, "Attribute can't have name 'self'. "
-                                                                            +"Recovery by skipping this one.");
-        } else if (!graph.hasClass(attr_node.typeid)) {
+        if (!graph.hasClass(attr_node.typeid)) {
             attr_node.typeid = validateType(attr_node.typeid, attr_node.lineNo);
             objScopeTable.insert(attr_node.name, attr_node.typeid);
             attr_node.value.accept(this);
