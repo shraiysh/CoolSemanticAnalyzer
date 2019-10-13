@@ -2,22 +2,52 @@ package cool;
 
 import java.util.*;
 
+/**
+ * Class for semantic check pass - which is an AST Visitor
+ */
 public class SemanticCheckPass extends ASTBaseVisitor {
 
+    /**
+     * graph is the inheritance graph for the class
+     */
     ClassGraph graph;
+
+    /**
+     * currClass holds the current class that we are visiting.
+     * Mostly used while reporting errors
+     */
     AST.class_ currClass;
+
+    /**
+     * objScopeTable is the scope table for variables.
+     * It stores their name and datatype
+     */
     ScopeTable<String> objScopeTable;
+
+    /**
+     * Integer used for setting fake identifiers in error recovery from redeclarations
+     */
     Integer n;
 
+    /**
+     * Constructs the object.
+     *
+     * @param      graph  Inheritance class graph
+     */
     public SemanticCheckPass(ClassGraph graph) {
-        // graph = new ClassGraph();
         this.graph = graph;
         this.objScopeTable = new ScopeTable<String>();
         this.n = 1;
     }
 
     /**
-     * Pass Launch from program_node
+     * Visit a program
+     * Ensures the following
+     *   - There exists a class named `Main'
+     *   - There exists a method named `main' for class `Main'
+     *   - The method `Main.main' has no formal arguments
+     *   
+     * @param      program_node  The program node
      */
     @Override
     public void visit(AST.program program_node) {
@@ -93,10 +123,12 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     }
 
     /**
-     * Check if both method signatures are the same
-     * @param a
-     * @param b
-     * @return
+     * Determines if same method signature.
+     *
+     * @param      a     First function
+     * @param      b     Second function
+     *
+     * @return     True if same method signature, False otherwise.
      */
     private boolean isSameMethodSignature(AST.method a, AST.method b) {
         if (!a.typeid.equals(b.typeid) || (a.formals.size() != b.formals.size())) {
@@ -141,38 +173,17 @@ public class SemanticCheckPass extends ASTBaseVisitor {
                 }
             }
         }
-        // for (int i = 0; i < ftList.size(); i++) {
-        //     AST.feature ft = ftList.get(i);
-        //     if (ft instanceof AST.method) {
-        //         AST.method mthd = (AST.method) ft;
-        //         validateMethodSignature(mthd);
-        //         //                                      hax for handling Object
-        //         AST.method parentMthd = ( parentNode == null ? null : parentNode.getMethod(mthd.name) );
-
-        //         if (parentMthd != null) { // if there is attempt to redefine parent method
-        //             if (!isSameMethodSignature(parentMthd, mthd)) { // Incorrect redfinition
-        //                 ftList.remove(ft); // remove this method if it is incompatible.
-        //                 i--;
-        //             }
-        //         } else if (node.getMethod(mthd.name) != null) {
-        //             ErrorHandler.reportError(currClass.filename, mthd.lineNo, "Method "+mthd.name
-        //                                                                 +" has multiple definitions." );
-        //             ftList.remove(ft);
-        //             i--;
-        //         } else { // fresh method defintion
-        //             node.methods.put(mthd.name, mthd);
-        //         }
-        //     }
-        // }
-        // // hax : i'm putting in the parent's 'AST.method' as value. But shouldn't matter
-        // // as we only care about signature.
-        // if(parentNode != null) node.methods.putAll(parentNode.methods);
 
         for (ClassGraph.Node ch : node.getChildNodes()) {
             updateFeaturelistDFS(ch);
         }
     }
 
+    /**
+     * Visit all the classes, that are not Base classes (DFS)
+     *
+     * @param      node  The root class node
+     */
     private void visitClassesDFS(ClassGraph.Node node) {
                 
         for (ClassGraph.Node ch : node.getChildNodes()) {
@@ -187,10 +198,16 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     }
 
+    /**
+     * Visit a class - ensures the following:
+     *   - self should not be a declared attribute
+     *   - No attribute should be redefined (inherited or same class)
+     *   - check method and attributes
+     *
+     * @param      class__node  The class node
+     */
     @Override
     public void visit(AST.class_ class__node) {
-
-        // System.out.println("Visiting class " + class__node.lineNo);
 
         objScopeTable.insert("self", class__node.name);
 
@@ -208,21 +225,14 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         }
 
         for(AST.feature ft : class__node.features) if(ft instanceof AST.method) {
-            // System.out.println(((AST.method)ft).name);
             ft.accept(this);
         }
     }
 
-
     @Override
     public void visit(AST.attr attr_node) {
 
-        // System.out.println("Visiting attr " + attr_node.lineNo);
-
-        if(attr_node.name.equals("self")) {
-            ErrorHandler.reportError(currClass.filename, attr_node.lineNo, "Attribute can't have name 'self'. "
-                                                                            +"Recovery by skipping this one.");
-        } else if (!graph.hasClass(attr_node.typeid)) {
+        if (!graph.hasClass(attr_node.typeid)) {
             attr_node.typeid = validateType(attr_node.typeid, attr_node.lineNo);
             objScopeTable.insert(attr_node.name, attr_node.typeid);
             attr_node.value.accept(this);
@@ -241,8 +251,6 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     @Override
     public void visit(AST.method method_node) {
 
-        // System.out.println("Visiting method " + method_node.lineNo);
-
         objScopeTable.enterScope();
 
         for(AST.formal fm : method_node.formals) {
@@ -260,8 +268,6 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     
     @Override
     public void visit(AST.formal formal_node) {
-
-        // System.out.println("Visiting formal " + formal_node.lineNo);
 
         if (formal_node.name.equals("self")) {
             ErrorHandler.reportError(currClass.filename, formal_node.lineNo, "Formal can't have name 'self'");
@@ -284,6 +290,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
         if(branch_node.name.equals("self")) {
             ErrorHandler.reportError(currClass.filename, branch_node.lineNo, "Can't bind to 'self' in Case.");
+            // return;
         }
         branch_node.type = validateType(branch_node.type, branch_node.lineNo);
 
@@ -369,14 +376,14 @@ public class SemanticCheckPass extends ASTBaseVisitor {
             // Different types
 
             // Check int string bool
-            boolean first = eq_node.e1.type == "Int" ||
-                            eq_node.e1.type == "String" ||
-                            eq_node.e1.type == "Bool"
+            boolean first = eq_node.e1.type.equals("Int") ||
+                            eq_node.e1.type.equals("String") ||
+                            eq_node.e1.type.equals("Bool")
                             ;
 
-            boolean second = eq_node.e2.type == "Int" ||
-                             eq_node.e2.type == "String" ||
-                             eq_node.e2.type == "Bool"
+            boolean second = eq_node.e2.type.equals("Int") ||
+                             eq_node.e2.type.equals("String") ||
+                             eq_node.e2.type.equals("Bool")
                              ;
 
             if(first || second) {
@@ -688,17 +695,15 @@ public class SemanticCheckPass extends ASTBaseVisitor {
         for(AST.branch branch : typcase_node.branches) {
             if(type_list.contains(branch.type)) {
                 // Error
-                ErrorHandler.reportError(currClass.name, branch.lineNo,
+                ErrorHandler.reportError(currClass.filename, branch.lineNo,
                     "Two cases should not be same type in case expression");
             }
         }
 
-        typcase_node.branches.get(0).accept(this);
         typcase_node.type = typcase_node.branches.get(0).value.type;
 
         // accepting and joining types of other branches
         for(int i=1; i<typcase_node.branches.size(); i++) {
-            typcase_node.branches.get(i).accept(this);
             typcase_node.type = graph.getLCA(typcase_node.type, typcase_node.branches.get(i).value.type);
         }
     }
@@ -713,8 +718,15 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
         String classname = static_dispatch_node.caller.type;
 
-        if(!graph.isAncestor(static_dispatch_node.typeid, static_dispatch_node.caller.type)) {
-            ErrorHandler.reportError(currClass.name, static_dispatch_node.lineNo,
+        if(!graph.hasClass(static_dispatch_node.typeid)) {
+            ErrorHandler.reportError(currClass.filename, static_dispatch_node.lineNo,
+               "Static dispatch to undefined class " + static_dispatch_node.typeid + ".");
+            static_dispatch_node.type = "Object";
+            return;
+        }
+
+        else if(!graph.isAncestor(static_dispatch_node.typeid, static_dispatch_node.caller.type)) {
+            ErrorHandler.reportError(currClass.filename, static_dispatch_node.lineNo,
                "Class " + static_dispatch_node.typeid + " is not an ancestor of the caller type " + static_dispatch_node.caller.type);
             static_dispatch_node.type = "Object";
             return;
@@ -726,25 +738,28 @@ public class SemanticCheckPass extends ASTBaseVisitor {
             ErrorHandler.reportError(currClass.filename, static_dispatch_node.lineNo,
                 "Method " + static_dispatch_node.name + "(...) not a feature of class " + classname);
             static_dispatch_node.type = "Object";
+            return;
         }
-        else {
+        // Check if the conforming calls
+        List<AST.expression> actuals = static_dispatch_node.actuals;
+        List<AST.formal> formals = method.formals;
 
-            // Check if the conforming calls
-            List<AST.expression> actuals = static_dispatch_node.actuals;
-            List<AST.formal> formals = method.formals;
+        if(actuals.size() != formals.size()) {
+            ErrorHandler.reportError(currClass.filename, static_dispatch_node.lineNo,
+                "Method " + static_dispatch_node.name + " invoked with wrong number of arguments.");
+        }
 
-            for(int i = 0; i < actuals.size(); i++) {
-                if(i < formals.size()) {
-                    if(!graph.isAncestor(formals.get(i).typeid, actuals.get(i).type)) {
-                        ErrorHandler.reportError(currClass.filename, static_dispatch_node.lineNo,
-                            "Type mismatch for arg " + formals.get(i).name + 
-                            ". Formal : " + formals.get(i).typeid +
-                            ", Actual : " + actuals.get(i).type);
-                    }
+        for(int i = 0; i < actuals.size(); i++) {
+            if(i < formals.size()) {
+                if(!graph.isAncestor(formals.get(i).typeid, actuals.get(i).type)) {
+                    ErrorHandler.reportError(currClass.filename, static_dispatch_node.lineNo,
+                        "Type mismatch for arg " + formals.get(i).name + 
+                        ". Formal : " + formals.get(i).typeid +
+                        ", Actual : " + actuals.get(i).type);
                 }
             }
-            static_dispatch_node.type = method.typeid;
         }
+        static_dispatch_node.type = method.typeid;
     }
 
 }
