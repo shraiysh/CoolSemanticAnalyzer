@@ -302,12 +302,14 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
         objScopeTable.enterScope();
 
-        if(branch_node.name.equals("self")) {
-            ErrorHandler.reportError(currClass.filename, branch_node.lineNo, "Can't bind to 'self' in Case.");
-        }
         branch_node.type = validateType(branch_node.type, branch_node.lineNo);
 
-        objScopeTable.insert(branch_node.name, branch_node.type);
+        if(branch_node.name.equals("self")) {
+            ErrorHandler.reportError(currClass.filename, branch_node.lineNo, "Can't bind to 'self' in Case.");
+        } else { // Do not insert self into scope.
+            objScopeTable.insert(branch_node.name, branch_node.type);
+        }
+
 
         branch_node.value.accept(this);
         objScopeTable.exitScope();
