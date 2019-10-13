@@ -289,13 +289,10 @@ public class SemanticCheckPass extends ASTBaseVisitor {
     @Override
     public void visit(AST.branch branch_node) {
 
-        // System.out.println("Visiting branch " + branch_node.lineNo);
-
         objScopeTable.enterScope();
 
         if(branch_node.name.equals("self")) {
-            ErrorHandler.reportError(currClass.filename, branch_node.lineNo, "Can't bind to 'self' in Case.");
-            // return;
+            ErrorHandler.reportError(currClass.filename, branch_node.lineNo, "'self' bound in 'case'.");
         }
         branch_node.type = validateType(branch_node.type, branch_node.lineNo);
 
@@ -309,37 +306,26 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.no_expr no_expr_node) {
-        // System.out.println("Visiting no_epxr " + no_expr_node.lineNo);
-
         no_expr_node.type = "_no_type";
     }
 
     @Override
     public void visit(AST.bool_const bool_const_node) {
-        // System.out.println("Visiting bool_const " + bool_const_node.lineNo);
-
         bool_const_node.type = "Bool";
     }
 
     @Override
     public void visit(AST.string_const string_const_node) {
-        // System.out.println("Visiting string_const " + string_const_node.lineNo);
-
         string_const_node.type = "String";
     }
 
     @Override
     public void visit(AST.int_const int_const_node) {
-        // System.out.println("Visiting inst_const " + int_const_node.lineNo);
-
         int_const_node.type = "Int";
     }
 
     @Override
     public void visit(AST.object object_node) {
-
-        // System.out.println("Visiting object " + object_node.lineNo);
-
 
         String type = objScopeTable.lookUpGlobal(object_node.name);
         if(object_node.name.equals("self")) {
@@ -357,8 +343,6 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
     @Override
     public void visit(AST.comp comp_node) {
-
-        // System.out.println("Visiting comp_node " + comp_node.lineNo);
 
         comp_node.e1.accept(this);
         if(!comp_node.e1.type.equals("Bool")) {
@@ -701,8 +685,9 @@ public class SemanticCheckPass extends ASTBaseVisitor {
             if(type_list.contains(branch.type)) {
                 // Error
                 ErrorHandler.reportError(currClass.filename, branch.lineNo,
-                    "Two cases should not be same type in case expression");
+                    "Duplicate branch " + branch.type + " in case statement.");
             }
+            type_list.add(branch.type);
         }
 
         typcase_node.type = typcase_node.branches.get(0).value.type;
@@ -741,7 +726,7 @@ public class SemanticCheckPass extends ASTBaseVisitor {
 
         if(method == null) {
             ErrorHandler.reportError(currClass.filename, static_dispatch_node.lineNo,
-                "Method " + static_dispatch_node.name + "(...) not a feature of class " + classname);
+                "Method " + static_dispatch_node.name + "(...) not a feature of class " + static_dispatch_node.typeid);
             static_dispatch_node.type = "Object";
             return;
         }
