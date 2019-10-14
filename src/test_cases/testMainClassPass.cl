@@ -1,5 +1,6 @@
-class A {
-  x : Int;
+(*No error*)
+
+class Main {
   main() : Int {
     5
   };
