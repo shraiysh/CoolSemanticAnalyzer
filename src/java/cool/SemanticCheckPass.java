@@ -627,8 +627,8 @@ public class SemanticCheckPass extends ASTBaseVisitor {
                     // Not Conforming
                     ErrorHandler.reportError(currClass.filename, let_node.lineNo,
                         "Type " + let_node.value.type + 
-                        " of assigned expression does not conform to declared type " + type 
-                        + " of identifier " + let_node.name + ".");                
+                        " of assigned expression does not conform to declared type " + type + 
+                        " of identifier " + let_node.name + ".");                
                 }
             }
 
