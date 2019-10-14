@@ -1,7 +1,5 @@
 package cool;
 
-
-
 public class Semantic{
 	private boolean errorFlag = false;
 	public void reportError(String filename, int lineNo, String error){
@@ -15,22 +13,39 @@ public class Semantic{
 /*
 	Don't change code above this line
 */
+
+
+	// private AST.method abort = new AST.method("abort", new ArrayList<AST.formal>(), "Object", new AST.expression(), 1);
+	// private AST.method type_name = new AST.method("type_name", new ArrayList<AST.formal>(), "String", new AST.expression(), 1);
+	// private AST.method copy = new AST.method("copy", new ArrayList<AST.formal>(), "SELF_TYPE", new AST.expression(), 1);
+	// AST.class_ object = new AST.class_("Object", "BASIC_CLASS", "", Arrays.asList(abort, type_name, copy), 1);
+
+	// int numClasses = 0;
+	// HashMap<String, AST.class_> classnameToClass = new HashMap<String, AST.class_>();
+	// HashMap<String, Integer> classnameToInt = new HashMap<String, Integer>();
+	// HashMap<Integer, String> intToClassname = new HashMap<Integer, String>();
+
+	// ArrayList<ArrayList<Integer>> classGraph = new ArrayList<ArrayList<Integer>>();
+
 	public Semantic(AST.program program){
 		//Write Semantic analyzer code here
+
+		ClassGraph graph = new ClassGraph();
+
+		ASTVisitor pass1 = new InfoGatherPass(graph);
+		program.accept(pass1);
+
+		if(ErrorHandler.getErrorFlag()) {
+			System.exit(1);
+		}
 		
-		// Check for cycles in inheritance graph
-		Graph<String> iGraph = new Graph<String>();
-		for(AST.class_ iclass : program.classes) {
-			iGraph.addEdge(iclass.name, iclass.parent, false);
+		ASTVisitor pass2 = new SemanticCheckPass(graph);
+		program.accept(pass2);
+
+		if(ErrorHandler.getErrorFlag()) {
+			System.exit(1);
 		}
 
-		if(iGraph.isCyclic()) {
-			System.err.println("ERROR: Cyclic Inheritance (Parent graph): \n" + iGraph.toString(" -> "));
-			System.err.println("Aborting.");
-			System.exit(0);
-		}
-
-		// Valid Inheritance graph
-		// Add other checks now
 	}
+
 }
