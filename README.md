@@ -116,5 +116,28 @@ Some of these Recovery decisions are :
 * If method has been redeclares in the same scope the first declaration/defintion is considered valid.
 * Redefined attributes are dealt with similarly and the first is considered valid.
 
+# Testing
+## Visitor testing
+Individual cases for all the errors being reported are written in test_cases/visitorChecks. Some passing cases are also written.
 
+* __checkAssignVisit.cl__ - Test cases for semantic analysis of an assign node. Type conforming and asignment to self is checked. Undeclared variables also reported.
+* __checkAttrVisit.cl__ - Test cases for semantic analysis of an attr node. Checks type of attr should be defined and that the types conform on assignment.
+* __checkBranch_TypecaseVisit.cl__ - Test cases for semantic analysis of branch node and typecase nodes. Checks that self cannot be bound, no undefined class and no two cases should be of same class
+* __checkBranchVisit.cl__ - Test case for usage of branch variable inside the expression in type_case
+* __checkClassVisit.cl__ - Test cases for semantic analysis of class node. Checks for attribute redefinitions, and that they should not be named self
+* __checkDispatch.cl__ - Test cases for semantic analysis of dispatch node - static and normal. Makes sure that the method exists and that it is called with conforming and correct number of arguments. For static dispatch, it also makes sure that the class is defined and that it is an ancestor of the type of object calls it.
+* __checkFormalVisit.cl__ - Test cases for semantic analysis of formal node. Checks that self should not be name of argument and that variables are not defined multiple times.
+* __checkLoopIfElseLet.cl__ - Test cases for semantic analysis of If-else, while-loop node and let. Checks that the predicate must be boolean. Checks that the join of types of if and else branch must conform with type of variable that gets this value. For let nodes, it checks that self should not be initialized, undefined types should not be used and datatypes should conform
+* __checkMethodVisit.cl__ - Test cases for semantic analysis of method node. Return type must be defined and must conform with the value of body.
+* __testOps.cl__ - Test cases for semantic analysis of operator nodes. Mainly for types of operands and reports an error if they are not permitted.
+* __testUndeclObj.cl__ - Test cases for use of undeclared object.
 
+## Inheritance Cycle and Main testing
+These test cases focus on the inheritance cycle and the main method of Main class in a program. They also check for invalid multiple class definitions and invalid method overloading
+* __testInheritanceCycleFail.cl__ - Checks for inheritance cycle. And this should report and error
+* __testInheritanceCycleSuccess.cl__ - There is no inheritance cycle here, this should pass flawlessly.
+* __testMainClassFail.cl__ - Main class is absent in the program. Error should be reported
+* __testMainClassPass.cl__ - Program has a main class, so no error
+* __testMainMethodFail[01,02].cl__ - No main method in Main class or main method has some args in that, which is an error
+* __testMethodOverloading.cl__ - Program has multiple methods with same name, but different signatures. This is not allowed in cool
+* __testMultipleClassDef.cl__ - Program has multiple class definitions of the same name. This is also invalid.
